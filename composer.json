@@ -1,0 +1,45 @@
+{
+    "name": "frakt24/laravel-firestore",
+    "description": "A Laravel package for Firestore integration",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fredrik Borgstein",
+            "email": "fredrik@frakt24.no"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^8.0|^9.0|^10.0",
+        "google/apiclient": "^2.12",
+        "google/auth": "^1.18",
+        "ext-curl": "*"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0|^7.0|^8.0",
+        "phpunit/phpunit": "^9.0|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Frakt24\\LaravelFirestore\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Frakt24\\LaravelFirestore\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Frakt24\\LaravelFirestore\\FirestoreServiceProvider"
+            ],
+            "aliases": {
+                "Firestore": "Frakt24\\LaravelFirestore\\Facades\\Firestore"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
