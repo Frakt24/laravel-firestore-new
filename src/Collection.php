@@ -78,7 +78,7 @@ class Collection
             $query .= "&pageToken=" . urlencode($pageToken);
         }
         
-        $response = $this->firestore->get($this->firestore->getBasePath() . '/' . $this->path . $query);
+        $response = $this->firestore->get($this->path . $query);
         
         return $this->parseListDocumentsResponse($response);
     }
