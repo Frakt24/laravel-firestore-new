@@ -51,9 +51,12 @@ class Collection
      * Add a new document to the collection with an auto-generated ID.
      * @throws RandomException
      */
-    public function add(array $data): Document
+    public function add(array $data, ?string $id = null): Document
     {
-        $id = $this->generateRandomId();
+        if (!$id) {
+            $id = $this->generateRandomId();
+        }
+
         $document = $this->document($id);
         $document->createOrUpdateDocument($data);
         
