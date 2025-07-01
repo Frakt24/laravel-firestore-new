@@ -44,7 +44,10 @@ class Collection
 
     public function document(string $id): Document
     {
-        return new Document($this->firestore, $this->id, $id);
+        $pathParts = explode('/', $this->path);
+        $collectionPath = implode('/', $pathParts);
+
+        return new Document($this->firestore, $collectionPath, $id);
     }
 
     /**
