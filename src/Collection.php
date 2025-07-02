@@ -26,9 +26,15 @@ class Collection
     public function __construct(Firestore $firestore, string $path)
     {
         $this->firestore = $firestore;
-        $this->path = $path;
         
-        $pathParts = explode('/', $path);
+        $basePath = $firestore->getBasePath();
+        if (strpos($path, $basePath) === 0) {
+            $this->path = $path;
+        } else {
+            $this->path = $basePath . '/' . $path;
+        }
+        
+        $pathParts = explode('/', $this->path);
         $this->id = end($pathParts);
     }
 
@@ -44,8 +50,12 @@ class Collection
 
     public function document(string $id): Document
     {
-        $pathParts = explode('/', $this->path);
-        $collectionPath = implode('/', $pathParts);
+        $basePath = $this->firestore->getBasePath();
+        $collectionPath = $this->path;
+        
+        if (strpos($this->path, $basePath) === 0) {
+            $collectionPath = substr($this->path, strlen($basePath) + 1);
+        }
 
         return new Document($this->firestore, $collectionPath, $id);
     }

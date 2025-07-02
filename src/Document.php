@@ -35,7 +35,13 @@ class Document
         $this->firestore = $firestore;
         $this->collection = $collection;
         $this->id = $id;
-        $this->path = $this->firestore->getBasePath() . "/{$collection}/{$id}";
+        
+        $basePath = $firestore->getBasePath();
+        if (strpos($collection, $basePath) === 0) {
+            $this->path = "{$collection}/{$id}";
+        } else {
+            $this->path = "{$basePath}/{$collection}/{$id}";
+        }
     }
 
     public function getDocumentId(): string
@@ -132,7 +138,7 @@ class Document
         
         return new Collection(
             $this->firestore,
-            $this->firestore->getBasePath() . '/' . $subcollectionPath
+            $subcollectionPath
         );
     }
 
