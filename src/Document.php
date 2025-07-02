@@ -109,7 +109,11 @@ class Document
         $fieldPaths = [];
         foreach (array_keys($data) as $key) {
             try {
-                $formattedKey = preg_replace('/\.(\d+)\./', '.`$1`.', $key);
+                $formattedKey = $key;
+                if (is_numeric($key)) {
+                    $formattedKey = '`' . $key . '`';
+                }
+                $formattedKey = preg_replace('/\.(\d+)\./', '.`$1`.', $formattedKey);
                 $fieldPaths[] = 'updateMask.fieldPaths=' . urlencode($formattedKey);
             } catch (\Throwable $e) {
                 throw EncodingException::invalidArrayIndex($key);
