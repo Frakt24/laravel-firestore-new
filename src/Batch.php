@@ -142,8 +142,11 @@ class Batch
             }
         }
 
-        $response = $this->firestore->post('v1:commit', [
-            'database' => $this->firestore->getDatabasePath(),
+        $projectId = $this->firestore->getProjectId();
+        $databaseId = $this->firestore->getDatabaseId();
+        $endpoint = "projects/{$projectId}/databases/{$databaseId}/documents:commit";
+        
+        $response = $this->firestore->post($endpoint, [
             'writes' => $writes
         ]);
 
