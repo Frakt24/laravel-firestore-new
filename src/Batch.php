@@ -142,7 +142,8 @@ class Batch
             }
         }
 
-        $response = $this->firestore->post('projects/' . $this->firestore->getProjectId() . '/databases/' . $this->firestore->getDatabaseId() . ':commit', [
+        $databasePath = $this->firestore->getDatabasePath();
+        $response = $this->firestore->post($databasePath . ':commit', [
             'writes' => $writes
         ]);
 
