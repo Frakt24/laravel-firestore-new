@@ -72,6 +72,25 @@ class Batch
     }
 
     /**
+     * @throws BatchException
+     */
+    public function deleteMultiple(array $documents): self
+    {
+        if ($this->committed) {
+            throw BatchException::alreadyCommitted();
+        }
+
+        foreach ($documents as $document) {
+            $this->operations[] = [
+                'type' => 'delete',
+                'document' => $document
+            ];
+        }
+
+        return $this;
+    }
+
+    /**
      * @throws ApiException
      * @throws GuzzleException
      * @throws BatchException
