@@ -59,11 +59,22 @@ class Document
         return $this->collection;
     }
 
+    /**
+     * @throws DocumentNotFoundException
+     * @throws ApiException
+     * @throws GuzzleException
+     */
     public function retrieveDocumentData(): array
     {
-        $response = $this->firestore->get($this->path);
-        
-        return $this->parseDocumentData($response);
+        try {
+            $response = $this->firestore->get($this->path);
+            return $this->parseDocumentData($response);
+        } catch (ApiException $e) {
+            if ($e->getStatusCode() === 404) {
+                throw DocumentNotFoundException::create($this->collection, $this->id);
+            }
+            throw $e;
+        }
     }
 
     public function checkDocumentExistence(): bool
