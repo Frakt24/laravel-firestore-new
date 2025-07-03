@@ -142,7 +142,7 @@ class Batch
             }
         }
 
-        $response = $this->firestore->post('v1/projects/' . $this->firestore->getProjectId() . '/databases/' . $this->firestore->getDatabaseId() . ':commit', [
+        $response = $this->firestore->post('projects/' . $this->firestore->getProjectId() . '/databases/' . $this->firestore->getDatabaseId() . ':commit', [
             'writes' => $writes
         ]);
 
