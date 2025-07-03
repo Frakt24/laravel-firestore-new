@@ -275,6 +275,10 @@ class Document
         if (method_exists($value, 'toArray')) {
             return $this->encodeArrayOrMap($value->toArray());
         }
+        
+        if (is_object($value)) {
+            return $this->encodeArrayOrMap($this->objectToArray($value));
+        }
 
         try {
             return ['stringValue' => (string)$value];
@@ -311,5 +315,18 @@ class Document
         }
 
         return ['mapValue' => ['fields' => (object) $fields]];
+    }
+
+    private function objectToArray(object $object): array
+    {
+        $reflectionClass = new \ReflectionClass($object);
+        $properties = $reflectionClass->getProperties(\ReflectionProperty::IS_PUBLIC);
+
+        $array = [];
+        foreach ($properties as $property) {
+            $array[$property->getName()] = $property->getValue($object);
+        }
+
+        return $array;
     }
 }
