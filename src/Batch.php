@@ -109,7 +109,7 @@ class Batch
                     $writes[] = [
                         'update' => [
                             'name' => $operation['document']->getDocumentPath(),
-                            'fields' => $operation['document']->encodeDocumentData($operation['data'])
+                            'fields' => $operation['document']->encodeData($operation['data'])
                         ]
                     ];
                     break;
@@ -118,7 +118,7 @@ class Batch
                     $write = [
                         'update' => [
                             'name' => $operation['document']->getDocumentPath(),
-                            'fields' => $operation['document']->encodeDocumentData($operation['data'])
+                            'fields' => $operation['document']->encodeData($operation['data'])
                         ]
                     ];
 

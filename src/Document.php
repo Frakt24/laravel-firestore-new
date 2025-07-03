@@ -207,6 +207,18 @@ class Document
     }
 
     /**
+     * Public method to encode document data for use by other classes
+     * 
+     * @param array $data The data to encode
+     * @return array The encoded data
+     * @throws EncodingException
+     */
+    public function encodeData(array $data): array
+    {
+        return $this->encodeDocumentData($data);
+    }
+
+    /**
      * @throws EncodingException
      */
     protected function encodeDocumentData(array $data): array
