@@ -7,7 +7,10 @@ use Google\Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use Illuminate\Support\Facades\Cache;
+use Psr\Http\Message\RequestInterface;
 use Frakt24\LaravelFirestore\Exceptions\ApiException;
 use Frakt24\LaravelFirestore\Exceptions\AuthenticationException;
 use Frakt24\LaravelFirestore\Exceptions\TransactionException;
@@ -80,13 +83,16 @@ class Firestore
             throw AuthenticationException::credentialsNotFound();
         }
 
-        $token = $this->getAccessToken();
+        $stack = HandlerStack::create();
+        $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
+            return $request->withHeader('Authorization', 'Bearer ' . $this->getAccessToken());
+        }));
 
         $this->httpClient = new HttpClient([
+            'handler'       => $stack,
             'base_uri'      => $this->baseUrl,
             'http_version'  => 2.0,
             'headers'       => [
-                'Authorization' => 'Bearer ' . $token,
                 'Content-Type'  => 'application/json',
                 'Connection'    => 'keep-alive',
             ],
@@ -99,17 +105,27 @@ class Firestore
         ]);
     }
 
+    /**
+     * Safety margin (seconds) to refresh tokens before their real Google expiry.
+     */
+    private const TOKEN_EXPIRY_BUFFER = 120;
+
     protected function getAccessToken(): string
     {
         $cacheKey = 'firestore_token_' . $this->projectId;
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && isset($cached['token'], $cached['expires_at']) && $cached['expires_at'] > time() + self::TOKEN_EXPIRY_BUFFER) {
+            return $cached['token'];
         }
 
         $this->client->fetchAccessTokenWithAssertion();
-        $token = $this->client->getAccessToken()['access_token'] ?? '';
+        $info = $this->client->getAccessToken();
+        $token = $info['access_token'] ?? '';
         if ($token) {
-            Cache::put($cacheKey, $token, 3500);
+            $expiresIn = (int) ($info['expires_in'] ?? 3600);
+            $expiresAt = time() + $expiresIn;
+            $ttl = max(60, $expiresIn - self::TOKEN_EXPIRY_BUFFER);
+            Cache::put($cacheKey, ['token' => $token, 'expires_at' => $expiresAt], $ttl);
         }
         return $token;
     }
