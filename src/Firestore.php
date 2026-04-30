@@ -54,6 +54,11 @@ class Firestore
     protected int $tokenCacheTime;
 
     /**
+     * Stable fingerprint of the credentials used by this instance.
+     */
+    protected string $credentialsFingerprint = '';
+
+    /**
      * Create a new Firestore instance.
      * @throws AuthenticationException|Exception
      */
@@ -77,8 +82,12 @@ class Firestore
         );
         if ($keyFile && file_exists($keyFile)) {
             $this->client->setAuthConfig($keyFile);
-        } elseif (getenv('GOOGLE_APPLICATION_CREDENTIALS')) {
+            $this->credentialsFingerprint = $this->fingerprintFromKeyFile($keyFile);
+        } elseif ($adc = getenv('GOOGLE_APPLICATION_CREDENTIALS')) {
             $this->client->useApplicationDefaultCredentials();
+            $this->credentialsFingerprint = is_string($adc) && file_exists($adc)
+                ? $this->fingerprintFromKeyFile($adc)
+                : substr(hash('sha256', (string) $adc), 0, 16);
         } else {
             throw AuthenticationException::credentialsNotFound();
         }
@@ -112,7 +121,7 @@ class Firestore
 
     protected function getAccessToken(): string
     {
-        $cacheKey = 'firestore_token_' . $this->projectId;
+        $cacheKey = 'firestore_token_' . $this->projectId . ':' . $this->credentialsFingerprint;
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && isset($cached['token'], $cached['expires_at']) && $cached['expires_at'] > time() + self::TOKEN_EXPIRY_BUFFER) {
             return $cached['token'];
@@ -143,6 +152,22 @@ class Firestore
         } finally {
             optional($lock)->release();
         }
+    }
+
+    protected function fingerprintFromKeyFile(string $keyFile): string
+    {
+        $contents = @file_get_contents($keyFile);
+        if ($contents === false) {
+            return substr(hash('sha256', $keyFile), 0, 16);
+        }
+
+        $decoded = json_decode($contents, true);
+        if (is_array($decoded) && isset($decoded['client_email'])) {
+            $seed = $decoded['client_email'] . '|' . ($decoded['private_key_id'] ?? '');
+            return substr(hash('sha256', $seed), 0, 16);
+        }
+
+        return substr(hash('sha256', $contents), 0, 16);
     }
 
     protected function resolveKeyFilePath(?string $path): ?string
