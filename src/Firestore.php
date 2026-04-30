@@ -118,16 +118,31 @@ class Firestore
             return $cached['token'];
         }
 
-        $this->client->fetchAccessTokenWithAssertion();
-        $info = $this->client->getAccessToken();
-        $token = $info['access_token'] ?? '';
-        if ($token) {
+        $lock = Cache::lock($cacheKey . '_lock', 10);
+        try {
+            $lock->block(5);
+
+            $cached = Cache::get($cacheKey);
+            if (is_array($cached) && isset($cached['token'], $cached['expires_at']) && $cached['expires_at'] > time() + self::TOKEN_EXPIRY_BUFFER) {
+                return $cached['token'];
+            }
+
+            $this->client->fetchAccessTokenWithAssertion();
+            $info = $this->client->getAccessToken();
+            $token = $info['access_token'] ?? '';
+            if ($token === '') {
+                throw AuthenticationException::invalidCredentials('Failed to obtain access token from Google.');
+            }
+
             $expiresIn = (int) ($info['expires_in'] ?? 3600);
             $expiresAt = time() + $expiresIn;
             $ttl = max(60, $expiresIn - self::TOKEN_EXPIRY_BUFFER);
             Cache::put($cacheKey, ['token' => $token, 'expires_at' => $expiresAt], $ttl);
+
+            return $token;
+        } finally {
+            optional($lock)->release();
         }
-        return $token;
     }
 
     protected function resolveKeyFilePath(?string $path): ?string
